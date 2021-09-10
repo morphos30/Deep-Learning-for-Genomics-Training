@@ -1,4 +1,4 @@
-# Phase 2 : Inserm workshop on Machine Learning in Biology (Raphael Mourad)
+# Deep Learning for Genomics Training (Raphael Mourad, Biostatistics platform, INRAe)
 
 ![plot](https://github.com/benoitballester/inserm-ML-workshop-266/blob/main/header_googlesites.png?raw=true)
 
