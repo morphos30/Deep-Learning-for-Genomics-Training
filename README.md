@@ -45,7 +45,7 @@ https://tensorflow.rstudio.com/installation/gpu/local_gpu/
 Ideally, you should install libraries for GPUs if you have an Nvidia GPU. If not, you can also install tensorflow and keras for CPU. 
 
 The following R libraries must be installed (using install.packages() function):
-- pROC, reticulate, tensorflow, keras, reticulate, glmnet, doParallel, ranger, e1071, gkmSVM, data.table, ggplot2, gplots, knitr, markdown, rmarkdown, tinytex
+- pROC, reticulate, tensorflow, keras, reticulate, glmnet, doParallel, ranger, e1071, gkmSVM, data.table, ggplot2, gplots, knitr, markdown, rmarkdown, tinytex, ggseqlogo
 
 The following R libraries must be installed (using bioconductor):
 - BSgenome.Hsapiens.UCSC.hg19, BSgenome.Hsapiens.UCSC.hg19.masked, GenomicRanges, Biostrings, TFBSTools, JASPAR2020, motifStack, universalmotif, motifmatchr, kebabs
