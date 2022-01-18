@@ -9,7 +9,7 @@ output: html_document
 
 Set up your project folder to your folder "atelier_INSERM".
 ```{r, setup}
-knitr::opts_knit$set(root.dir = "/media/raphael/SSD2/atelier_INSERM")
+knitr::opts_knit$set(root.dir = "/shared/ifbstor1/home/rmourad/Deep-Learning-for-Genomics-Training-main/")
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
@@ -50,7 +50,7 @@ Define parameters for the analysis:
 ```{r, parameters}
 peakSize=201
 kpeaks=4000
-expe="DNase"
+expe="CTCF"
 DNAletters=c("A","C","G","T")
 vocab_size=length(DNAletters)
 ```
@@ -139,7 +139,7 @@ print(kernelPFMList)
 
 Plot first motif
 ```{r, plot_1stmotif}
-motif1 <- new("pcm", mat=as.matrix(kernelPFMList[[1]]), name=ID(kernelPFMList[[1]]))
+motif1 <- new("pcm", mat=as.matrix(kernelPFMList[[1]]), name=ID(kernelPFMList[[2]]))
 plot(motif1)
 ```
 

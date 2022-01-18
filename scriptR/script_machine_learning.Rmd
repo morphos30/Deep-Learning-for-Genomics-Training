@@ -9,7 +9,7 @@ output: html_document
 
 Set up your project folder to your folder "atelier_INSERM".
 ```{r, setup}
-knitr::opts_knit$set(root.dir = "/media/raphael/SSD2/atelier_INSERM")
+knitr::opts_knit$set(root.dir = "/shared/ifbstor1/home/rmourad/Deep-Learning-for-Genomics-Training-main/")
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
@@ -51,7 +51,7 @@ Define parameters for the analysis:
 ```{r, parameters}
 peakSize=201
 kpeaks=4000
-expe="DNase"
+expe="CTCF"
 DNAletters=c("A","C","G","T")
 ```
 
@@ -166,9 +166,9 @@ plot(rocLasso_motif,main=paste0("AUROC: ", round(pROC::auc(rocLasso_motif),3)))
 
 Random forests:
 ```{r, randomforests_motifs}
-dataRF_motif=data.frame(label=labelTrain,as(mcTrain,"matrix"))
-RF_motif=ranger(label ~ .,data=dataRF_motif,importance="permutation")
-predRF_motif=predict(RF_motif,data=data.frame(as(mcTest,"matrix")))$predictions
+dataRF_motif=data.frame(label=as.factor(labelTrain),as(mcTrain,"matrix"))
+RF_motif=ranger(label ~ .,data=dataRF_motif,importance="permutation",probability=T)
+predRF_motif=predict(RF_motif,data=data.frame(as(mcTest,"matrix")))$predictions[,2]
 rocRF_motif=pROC::roc(as.factor(labelTest),predRF_motif,ci=T)
 plot(rocRF_motif,main=paste0("AUROC: ", round(pROC::auc(rocRF_motif),3)))
 ```
@@ -191,7 +191,8 @@ barplot(dataImportanceMotif[,4],names.arg=dataImportanceMotif[,3],cex.names=0.5,
 
 Support vector machine (a bit slow):
 ```{r, SVM_motifs}
-SVM_motif=svm(label ~ ., data=dataRF_motif, kernel="linear",scale=F)
+dataSVM_motif=data.frame(label=labelTrain,as(mcTrain,"matrix"))
+SVM_motif=svm(label ~ ., data=dataSVM_motif, kernel="linear",scale=F)
 predSVM_motif=predict(SVM_motif,newdata=data.frame(as(mcTest,"matrix")))
 rocSVM_motif=pROC::roc(as.factor(labelTest),predSVM_motif,ci=T)
 plot(rocSVM_motif,main=paste0("AUROC: ", round(pROC::auc(rocSVM_motif),3)))

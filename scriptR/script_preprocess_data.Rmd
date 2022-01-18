@@ -9,7 +9,7 @@ output: html_document
 
 Set up your project folder to your folder "atelier_INSERM".
 ```{r, setup}
-knitr::opts_knit$set(root.dir = "/media/raphael/SSD2/atelier_INSERM")
+knitr::opts_knit$set(root.dir = "/shared/ifbstor1/home/rmourad/Deep-Learning-for-Genomics-Training-main/")
 knitr::opts_chunk$set(echo = TRUE)
 ```
 

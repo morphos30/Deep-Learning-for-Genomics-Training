@@ -9,7 +9,7 @@ output: html_document
 
 Set up your project folder to your folder "atelier_INSERM".
 ```{r, setup}
-knitr::opts_knit$set(root.dir = "/media/raphael/SSD2/atelier_INSERM")
+knitr::opts_knit$set(root.dir = "/shared/ifbstor1/home/rmourad/Deep-Learning-for-Genomics-Training-main/")
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
@@ -48,7 +48,7 @@ Define parameters for the analysis:
 ```{r, parameters}
 peakSize=201
 kpeaks=4000
-expe="DNase"
+expe="CTCF"
 DNAletters=c("A","C","G","T")
 vocab_size=length(DNAletters)
 ```
@@ -147,7 +147,7 @@ print(delta2ndLastSNP)
 
 Mutation map around the 1st SNP
 ```{r, mutation_map}
-region.seq1=region.seq[1]
+region.seq1=region.seq[3]
 mutationMap=matrix(NA,4,nchar(region.seq1))
 valRef=predict(secondlast_layer_model, convertOneHot(region.seq1))
 for(i in 1:nchar(region.seq1)){
@@ -166,15 +166,15 @@ print(mutationMap[,1:10])
 Plot mutation maps (heatmaps)
 ```{r, heatmaps}
 file_mutationMap_large=paste0("results/SNP/mutationMap_",peakSize,"b_",expe,".pdf")
-#pdf(file_mutationMap_large,30,4)
+pdf(file_mutationMap_large,30,4)
 heatmap.2(mutationMap, trace="none", scale="none", dendrogram="none", Rowv=FALSE, Colv=FALSE, col=colorRampPalette(colors = c("blue","white","red")))
-#dev.off()
+dev.off()
 
 file_mutationMap_large=paste0("results/SNP/mutationMap_",41,"b_",expe,".pdf")
-#pdf(file_mutationMap_large,10,4)
+pdf(file_mutationMap_large,10,4)
 mapRange=(ceiling(peakSize/2)-20):(ceiling(peakSize/2)+20)
 heatmap.2(mutationMap[,mapRange], trace="none", scale="none", dendrogram="none", Rowv=FALSE, Colv=FALSE, col=colorRampPalette(colors = c("blue","white","red")))
-#dev.off()
+dev.off()
 ```
 
 
