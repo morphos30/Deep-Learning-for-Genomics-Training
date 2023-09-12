@@ -1,6 +1,10 @@
 
 
 
+### SETUP DIRECTORY FOR R LIBRARIES
+# For teaching at ENSAT
+#.libPaths("/usr/local/lib/R/x86_64-pc-linux-gnu-library/4.2")
+
 
 #### LOAD LIBRARIES
 
