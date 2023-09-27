@@ -150,9 +150,9 @@ if(F){
 model <- keras_model_sequential()
 model %>% 
   layer_conv_1d(filters = 256, kernel_size = 8, activation = 'relu',
-                input_shape = c(peakSize-1,vocab_size)) %>% 
+                input_shape = c(peakSize,vocab_size)) %>% 
   layer_conv_1d(filters = 256, kernel_size = 3, activation = 'relu',
-                input_shape = c(peakSize-1,vocab_size)) %>% 
+                input_shape = c(peakSize,vocab_size)) %>% 
   layer_global_max_pooling_1d() %>% 
   layer_dropout(rate = 0.5) %>% 
   layer_dense(units = 10, activation = "relu") %>%
@@ -167,7 +167,7 @@ Slow (not made for efficient parallel computing)
 if(T){
 model <- keras_model_sequential()
 model %>% 
-  layer_lstm(128,input_shape = c(peakSize-1,vocab_size)) %>%
+  layer_lstm(128,input_shape = c(peakSize,vocab_size)) %>%
   layer_dropout(rate = 0.5) %>% 
   layer_dense(units = 10, activation = "relu") %>%
   layer_dense(1) %>%
@@ -182,7 +182,7 @@ if(T){
 model <- keras_model_sequential()
 model %>% 
   layer_conv_1d(filters = 128, kernel_size = 16, activation = 'relu',
-                input_shape = c(peakSize-1,vocab_size)) %>% 
+                input_shape = c(peakSize,vocab_size)) %>% 
   layer_dropout(rate = 0.5) %>% 
   layer_lstm(12) %>% 
   layer_dropout(rate = 0.5) %>% 
