@@ -1,0 +1,187 @@
+---
+title: "Feature extraction and interpretation from convolutional neural networks"
+author: "Raphael Mourad, Maître de Conférences, Université Paul Sabatier"
+date: "10/02/2021"
+output: html_document
+---
+
+## SETUP PROJECT FOLDER
+
+Set up your project folder to your folder "atelier_INSERM".
+```{r, setup}
+knitr::opts_knit$set(root.dir = "/home/mourad/Downloads/Deep-Learning-for-Genomics-Training-main/")
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## AIM OF THE SCRIPT
+
+This script is used to extract and interpret the convolutional features from the trained CNN.
+
+
+## LOAD LIBRARIES
+
+
+Load R librairies.
+Remove suppressPackageStartupMessages() for debugging!
+```{r, libraries}
+suppressPackageStartupMessages(library(GenomicRanges))
+suppressPackageStartupMessages(library(Biostrings))
+suppressPackageStartupMessages(library(TFBSTools))
+suppressPackageStartupMessages(library(JASPAR2020))
+suppressPackageStartupMessages(library(reticulate))
+suppressPackageStartupMessages(library(motifStack))
+suppressPackageStartupMessages(library(universalmotif))
+```
+
+## LOAD FUNCTIONS
+
+```{r, function}
+suppressPackageStartupMessages(source("scriptR/functions.R"))
+```
+
+## SOME PARAMETERS
+
+Define parameters for the analysis:  
+- peakSize is the resized peak size. For machine/deep learning, it is easier to work with peaks have the same size.  
+- kpeaks is the number of best peaks used. Note that all peaks can also be used.  
+- expe is the ChIP-seq experiment. For instance, CTCF for CTCF ChIP-seq or POL2 for RNA Polymerase 2 ChIP-seq experiment. 
+```{r, parameters}
+peakSize=201
+kpeaks=4000
+expe="CTCF"
+DNAletters=c("A","C","G","T")
+vocab_size=length(DNAletters)
+```
+
+## INPUT FILE NAMES
+
+Set file names, which includes:  
+- positive peaks from ChIP-seq and negative peaks from the control generator function genNullSeqs().  
+- bed (genomic ranges) and fasta files (corresponding DNA sequences).
+```{r, files}
+fileBedPos=paste0("data/bed/",expe,"_GM12878_hg19_",kpeaks,"_pos.bed")
+fileBedNeg=paste0("data/bed/",expe,"_GM12878_hg19_",kpeaks,"_neg.bed")
+fileFastaPos=paste0("data/fasta/",expe,"_GM12878_hg19_",kpeaks,"_pos.fa")
+fileFastaNeg=paste0("data/fasta/",expe,"_GM12878_hg19_",kpeaks,"_neg.fa")
+```
+
+## LOAD PROCESSED DATA
+
+Load ChIP-seq and control fasta sequences:
+```{r, read}
+peakPos.seq=readDNAStringSet(fileFastaPos)
+peakNeg.seq=readDNAStringSet(fileFastaNeg)
+print(peakPos.seq)
+```
+
+## FEATURE EXTRACTION
+
+LOAD CONV ACTIVATION VALUES SAVED FROM GOOGLE COLAB
+```{r}
+np <- reticulate::import(module="numpy") # say 'no'
+# data reading
+conv1d_output <- np$load("/home/mourad/Downloads/conv_activ_pos.npy")
+
+kernelSize=peakSize-dim(conv1d_output)[2]+1
+print(kernelSize)
+
+conv1d_output[1,1:10,1:5]
+```
+
+Convert kernels to Position Frequency Matrices (PFMs)
+```{r, convert_kernels}
+activationThreshold=0.15
+kernelPFMList=convertToPWMs(conv1d_output, peakPos.seq, activationThreshold)
+print(kernelPFMList)
+```
+
+Plot first motif
+```{r, plot_1stmotif}
+motif1 <- new("pcm", mat=as.matrix(kernelPFMList[[4]]), name=ID(kernelPFMList[[1]]))
+plot(motif1)
+```
+
+Trimming and filtering of motifs based on information content
+```{r, trim_filter}
+ICthreshold=0.9
+PFMTrimmedList=motifTrimming(kernelPFMList,ICthreshold)
+motifTrimmed1 <- new("pcm", mat=as.matrix(PFMTrimmedList[[1]]), name=ID(PFMTrimmedList[[1]]))
+plot(motifTrimmed1)
+```
+
+Export motifs for dimension reduction with RSAT matrix-clustering
+```{r, export_motifs}
+kernelPFMListUM=convert_motifs(PFMTrimmedList, class = "universalmotif-universalmotif")
+write_jaspar(kernelPFMListUM,paste0("results/motif/trimmed_redundant_motifs_",expe,".jaspar"),overwrite=TRUE)
+```
+
+
+## MOTIF DIMENSION REDUCTION
+
+On https://rsat01.biologie.ens.fr/rsat/matrix-clustering_form.cgi  
+Run matrix clustering using the transfac file of motifs.  
+After, download the root motifs (click on "Additional Files").  
+Rename it to paste0("root_motifs_",expe,".tf").  
+
+
+## FEATURE IMPORTANCE
+
+Load root motifs
+```{r, load_root_motifs}
+rootMotifsUM=read_transfac(paste0("results/motif/root_motifs_",expe,".tf"))
+rootMotifs=do.call(PFMatrixList,convert_motifs(rootMotifsUM, "TFBSTools-PFMatrix"))
+print(rootMotifs)
+```
+
+DNA motif counts
+```{r, motif_counts}
+motif_ix=matchMotifs(rootMotifs,peakAllS.seq,out="scores",p.cutoff=1e-4)
+mcAllS=motifCounts(motif_ix)
+mcTrain=mcAllS[idxTrain,]
+mcTest=mcAllS[idxTest,]
+print(mcTrain[1:5,])
+```
+
+Random forests
+```{r, randomforests}
+dataRF_motif=data.frame(label=labelTrain,as(mcTrain,"matrix"))
+RF_motif=ranger(label ~ .,data=dataRF_motif,importance="permutation")
+predRF_motif=predict(RF_motif,data=data.frame(as(mcTest,"matrix")))$predictions
+rocRF_motif=pROC::roc(as.factor(labelTest),predRF_motif,ci=T)
+plot(rocRF_motif,main=paste0("AUROC: ", round(pROC::auc(rocRF_motif),3)))
+```
+
+Variable importance
+```{r, varimp}
+motifID=ID(rootMotifs)
+dataImportanceMotif=data.frame(motifID,importance=importance(RF_motif))
+dataImportanceMotif=dataImportanceMotif[order(importance(RF_motif),decreasing=T)[1:20],]
+dataImportanceMotif2=dataImportanceMotif[order(dataImportanceMotif[,2]),]
+barplot(dataImportanceMotif2[,2],names.arg=dataImportanceMotif2[,1],cex.names=0.7,horiz=T,las=2,xlab="Importance")
+```
+
+## FEATURE (MOTIF) VISUALIZATION
+
+Plot best motif logo from PFM matrix
+```{r, plot_bestmotif}
+rootMotifsMS=lapply(rootMotifs,function(x){new("pcm", mat=as.matrix(x), name=ID(x))})
+idxBestRootMotif=which(ID(rootMotifs)==dataImportanceMotif[1,1])
+plot(rootMotifsMS[[idxBestRootMotif]])
+```
+
+Plot motif clustering tree
+```{r, plot_clustering, fig.width=14, fig.height=26}
+file_plot_tree_motifs=paste0("results/motif/plot_tree_motifs_",expe,".pdf")
+#pdf(file_plot_tree_motifs,30,200)
+motifStack(rootMotifsMS, layout="tree")
+#dev.off()
+```
+
+
+
+
+
+
+
+
+
