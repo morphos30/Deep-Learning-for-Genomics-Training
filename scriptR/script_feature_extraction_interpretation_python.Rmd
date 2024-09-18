@@ -80,7 +80,7 @@ LOAD CONV ACTIVATION VALUES SAVED FROM GOOGLE COLAB
 ```{r}
 np <- reticulate::import(module="numpy") # say 'no'
 # data reading
-conv1d_output <- np$load("/home/mourad/Downloads/conv_activ_pos.npy")
+conv1d_output <- np$load("../conv_activ_pos.npy")
 
 kernelSize=peakSize-dim(conv1d_output)[2]+1
 print(kernelSize)
