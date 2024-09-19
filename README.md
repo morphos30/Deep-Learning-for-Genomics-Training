@@ -72,5 +72,5 @@ During the afternoon, we will first encode the DNA sequences as tensors using on
 We will use a deep learning model trained during the previous day to predict the impact of known non-coding single nucleotide polymorphisms (SNPs) on the binding of a particular transcription factor, histone mark activity or chromatin accessibility. The aim of the predictions will be to better understand the underlying biological mechanism of a non-coding SNP that is known to be associated to a particular common genetic disease (GWAS), and/or to be associated with gene expression deregulation. Moreover, we will compute mutation maps to evalute the impact of SNPs on a whole DNA region. During the last day, we will use the following R script: 
 - script_SNP_analysis.Rmd / script_SNP_analysis.html
 
-# Google Colab:
+## If the R code does not work for tensorflow and keras, use this Google Colab (which works on python):
 https://colab.research.google.com/drive/1MJocDZ5fC9qfbaGpXFFzGH-jGRywWN6L#scrollTo=OxW_pnHVv3Aa
