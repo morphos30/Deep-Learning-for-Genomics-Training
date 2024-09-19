@@ -1,0 +1,114 @@
+---
+title: "Prediction of SNP impact using convolutional neural networks."
+author: "Raphael Mourad, Maître de Conférences, Université Paul Sabatier"
+date: "10/02/2021"
+output: html_document
+---
+
+## SETUP PROJECT FOLDER
+
+Set up your project folder to your folder "atelier_INSERM".
+```{r, setup}
+knitr::opts_knit$set(root.dir = "/home/mourad/Downloads/Deep-Learning-for-Genomics-Training-main/")
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## AIM OF THE SCRIPT
+
+This script is used to predict the impact of a SNP on protein binding or chromatin accessibility for instance. For this purpose, trained convolutional neural networks are used.
+
+## LOAD LIBRARIES
+
+Load R librairies.
+Remove suppressPackageStartupMessages() for debugging!
+```{r, libraries}
+suppressPackageStartupMessages(library(BSgenome.Hsapiens.UCSC.hg19))
+suppressPackageStartupMessages(library(GenomicRanges))
+suppressPackageStartupMessages(library(Biostrings))
+suppressPackageStartupMessages(library(tensorflow))
+suppressPackageStartupMessages(library(keras))
+suppressPackageStartupMessages(library(data.table))
+suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(gplots))
+```
+
+## LOAD FUNCTIONS
+
+```{r, function}
+suppressPackageStartupMessages(source("scriptR/functions.R"))
+```
+
+## SOME PARAMETERS
+
+Define parameters for the analysis:  
+- peakSize is the resized peak size. For machine/deep learning, it is easier to work with peaks have the same size.  
+- kpeaks is the number of best peaks used. Note that all peaks can also be used.  
+- expe is the ChIP-seq experiment. For instance, CTCF for CTCF ChIP-seq or POL2 for RNA Polymerase 2 ChIP-seq experiment. 
+```{r, parameters}
+peakSize=201
+kpeaks=4000
+expe="CTCF"
+DNAletters=c("A","C","G","T")
+vocab_size=length(DNAletters)
+```
+
+
+## DEEP LEARNING PREDICTIONS OF SNP EFFECTS
+
+rs907091 and rs9303277 were found in a GWAS of childhood acute lymphoblastic leukemia  
+Article: https://www.nature.com/articles/s41467-017-02596-9 (supplementary file)  
+rs907091 rs9303277 are also eQTLs in blood (https://www.gtexportal.org/home/snp/rs9303277)  
+```{r, snp1}
+SNP.GR1=GRanges("chr17",IRanges(c(37921742,37976469,38029120)),ref=c("C","C","C"),alt=c("T","T","G"),strand='+',
+	rs=c("rs907091","rs9303277","rs12936231"),OR_GWAS=c(1.17,0.86,0.86), Effect_eQTL=c(0.32,-0.33,-0.34))
+```
+
+rs7329174 was found from GWAS catalog. It's associated with Crohn's disease and located in intron.
+```{r, snp2}
+SNP.GR2=GRanges("chr13",IRanges(c(41558110)),ref=c("A"),alt=c("G"), strand='+', rs=c(" rs7329174"),OR_GWAS=c(1.27))
+```
+
+rs142811167 and rs10821936 were found from GWAS catalog. It's associated with leukemia and located in intron.
+```{r, snp3}
+SNP.GR3=GRanges(c("chr11","chr10"),IRanges(c(7719585,63723577)),ref=c("C","T"),alt=c("T","C"), strand='+', rs=c("rs142811167","rs10821936"),OR_GWAS=c(87,1.8))
+```
+
+```{r, concat_snps}
+SNP.GR=c(SNP.GR1,SNP.GR2,SNP.GR3)
+print(SNP.GR)
+```
+
+Extract sequences surrounding the SNPs
+```{r, getseq}
+genomeVersion=BSgenome.Hsapiens.UCSC.hg19
+region.GRr=resize(SNP.GR,peakSize,fix="center")
+region.seq=as.character(getSeq(genomeVersion, names=seqnames(region.GRr),
+     start=start(region.GRr), end=end(region.GRr)))
+```
+
+
+Make sequences with reference alleles
+```{r, refseq}
+SNPposrel=ceiling((peakSize+1)/2)
+region.seqRef=region.seq
+substring(region.seqRef,SNPposrel,SNPposrel)=as.character(region.GRr$ref)
+names(region.seqRef)=paste0("seq",1:length(region.seqRef))
+print(region.seqRef)
+writeXStringSet(DNAStringSet(region.seqRef),filepath=paste0("data/fasta/sequences_SNPref_hg19.fa"))
+```
+
+Make sequences with alternative alleles
+```{r, altseq}
+region.seqAlt=region.seq
+substring(region.seqAlt,SNPposrel,SNPposrel)=as.character(region.GRr$alt)
+names(region.seqAlt)=paste0("seq",1:length(region.seqAlt))
+print(region.seqAlt)
+writeXStringSet(DNAStringSet(region.seqAlt),filepath=paste0("data/fasta/sequences_SNPalt_hg19.fa"))
+```
+
+
+
+
+
+
+
