@@ -28,9 +28,10 @@ suppressPackageStartupMessages(library(GenomicRanges))
 suppressPackageStartupMessages(library(Biostrings))
 suppressPackageStartupMessages(library(TFBSTools))
 suppressPackageStartupMessages(library(JASPAR2020))
-suppressPackageStartupMessages(library(reticulate))
+#suppressPackageStartupMessages(library(reticulate))
 suppressPackageStartupMessages(library(motifStack))
 suppressPackageStartupMessages(library(universalmotif))
+suppressPackageStartupMessages(library(data.table))
 ```
 
 ## LOAD FUNCTIONS
@@ -76,20 +77,21 @@ print(peakPos.seq)
 
 ## FEATURE EXTRACTION
 
-LOAD CONV ACTIVATION VALUES SAVED FROM GOOGLE COLAB
+Load conv activation values from Google Colab
 ```{r}
-np <- reticulate::import(module="numpy") # say 'no'
-# data reading
-conv1d_output <- np$load("../conv_activ_pos.npy")
+data_conv=fread("../conv_activations_pos_2d.csv.gz",header=F)
+data_conv=as.matrix(data_conv)
+print(dim(data_conv))
 
-kernelSize=peakSize-dim(conv1d_output)[2]+1
-print(kernelSize)
+conv1d_output <- array(data_conv, dim = c(nrow(data_conv), 178, 16))
+dim(conv1d_output)
 
-conv1d_output[1,1:10,1:5]
+print(conv1d_output[1:5,1:10,1])
 ```
 
 Convert kernels to Position Frequency Matrices (PFMs)
 ```{r, convert_kernels}
+kernelSize=dim(conv1d_output)[3]
 activationThreshold=0.15
 kernelPFMList=convertToPWMs(conv1d_output, peakPos.seq, activationThreshold)
 print(kernelPFMList)
@@ -97,7 +99,7 @@ print(kernelPFMList)
 
 Plot first motif
 ```{r, plot_1stmotif}
-motif1 <- new("pcm", mat=as.matrix(kernelPFMList[[4]]), name=ID(kernelPFMList[[1]]))
+motif1 <- new("pcm", mat=as.matrix(kernelPFMList[[2]]), name=ID(kernelPFMList[[1]]))
 plot(motif1)
 ```
 
