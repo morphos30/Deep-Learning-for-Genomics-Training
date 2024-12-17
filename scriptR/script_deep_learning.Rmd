@@ -25,8 +25,8 @@ Remove suppressPackageStartupMessages() for debugging!
 suppressPackageStartupMessages(library(GenomicRanges))
 suppressPackageStartupMessages(library(Biostrings))
 suppressPackageStartupMessages(library(pROC))
-suppressPackageStartupMessages(library(tensorflow))
-suppressPackageStartupMessages(library(keras))
+#suppressPackageStartupMessages(library(tensorflow))
+#suppressPackageStartupMessages(library(keras))
 suppressPackageStartupMessages(library(reticulate))
 ```
 
