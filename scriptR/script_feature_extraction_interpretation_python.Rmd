@@ -49,7 +49,7 @@ Define parameters for the analysis:
 ```{r, parameters}
 peakSize=201
 kpeaks=4000
-expe="CTCF"
+expe="DNase"
 DNAletters=c("A","C","G","T")
 vocab_size=length(DNAletters)
 ```
@@ -72,6 +72,7 @@ Load ChIP-seq and control fasta sequences:
 ```{r, read}
 peakPos.seq=readDNAStringSet(fileFastaPos)
 peakNeg.seq=readDNAStringSet(fileFastaNeg)
+
 print(peakPos.seq)
 ```
 
@@ -86,8 +87,9 @@ print(dim(data_conv))
 conv1d_output <- array(data_conv, dim = c(nrow(data_conv), 178, 16))
 dim(conv1d_output)
 
-print(conv1d_output[1:5,1:10,1])
+print(conv1d_output[1,1:10,1])
 ```
+
 
 Convert kernels to Position Frequency Matrices (PFMs)
 ```{r, convert_kernels}
@@ -99,13 +101,13 @@ print(kernelPFMList)
 
 Plot first motif
 ```{r, plot_1stmotif}
-motif1 <- new("pcm", mat=as.matrix(kernelPFMList[[2]]), name=ID(kernelPFMList[[1]]))
+motif1 <- new("pcm", mat=as.matrix(kernelPFMList[[2]]), name=ID(kernelPFMList[[2]]))
 plot(motif1)
 ```
 
 Trimming and filtering of motifs based on information content
 ```{r, trim_filter}
-ICthreshold=0.9
+ICthreshold=0.7
 PFMTrimmedList=motifTrimming(kernelPFMList,ICthreshold)
 motifTrimmed1 <- new("pcm", mat=as.matrix(PFMTrimmedList[[1]]), name=ID(PFMTrimmedList[[1]]))
 plot(motifTrimmed1)
@@ -137,8 +139,27 @@ print(rootMotifs)
 
 DNA motif counts
 ```{r, motif_counts}
+# Bind positive and negative sequences, and make label
+peakAll.seq=c(peakPos.seq,peakNeg.seq)
+label=c(rep(1,length(peakPos.seq)),rep(0,length(peakNeg.seq)))
+
+
+# Shuffle sequence indices
+idxS=sample(1:length(peakAll.seq))
+peakAllS.seq=peakAll.seq[idxS]
+labelS=label[idxS]
+
 motif_ix=matchMotifs(rootMotifs,peakAllS.seq,out="scores",p.cutoff=1e-4)
 mcAllS=motifCounts(motif_ix)
+
+
+# Split train and test indices
+percTrain=0.7
+idxTrain=1:(ceiling(length(labelS)*percTrain))
+idxTest=(length(idxTrain)+1):length(labelS)
+labelTrain=labelS[idxTrain]
+labelTest=labelS[idxTest]
+
 mcTrain=mcAllS[idxTrain,]
 mcTest=mcAllS[idxTest,]
 print(mcTrain[1:5,])
